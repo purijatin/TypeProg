@@ -74,6 +74,8 @@ object TypeProg2 extends App{
 
 
   }
+
+
   sealed trait Succ[N <: Nat] extends Nat {
     type Match[NonZero[_ <: Nat] <: Up, IfZero <: Up, Up] = NonZero[N]
 
