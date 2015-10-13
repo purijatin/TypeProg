@@ -27,8 +27,8 @@ class JavaP extends RegexParsers{
     case modifiers ~ line => JInstanceVariable(modifiers.fold(List[String]())(x => List(x)), line)
   }
 
-  def block: Parser[JBlock] = "{" ~> "[^}]*" <~ "}" ^^ {x => JBlock(x)}
-  def nestedBlocks = "{" ~> rep((("[^{^}]*".r) | (block))) <~ "}"
+  def
+  block: Parser[JBlock] = "{" ~> ("[^{^}]*".r ~ opt(block)) <~ "}" ^^ {x => JBlock(x.toString)}
 
   val blockC = new Parser[String] {
     override def apply(in: Input): ParseResult[String] = {
@@ -53,14 +53,32 @@ class JavaP extends RegexParsers{
   }
 
 
-  def staticBlock: Parser[String] = "static" ~> blockC ^^ {
+  def staticBlock: Parser[String] = "static" ~> block ^^ {
     case x => x.toString
   }
 
-  def annotation: Parser[JAnno] = "@"~>name <~ opt("(" ~> """[^)]*""".r <~ ")") ^^ { x => JAnno(x)}
-  def method = opt(javadoc) ~ """(public|protected|private|static|\s) +[\w\<\>\[\]]+\s+(\w+) *\([^\)]*\) *(\{?|[^;])""".r ^^ { x =>
+  def modifiers:Parser[List[String]] = rep("""(public|protected|private|static)""".r) ^^ {case x => x}
 
-  }
+  def annotation: Parser[JAnno] = "@"~>name <~ opt("(" ~> """[^)]*""".r <~ ")") ^^ { x => JAnno(x)}
+  /*
+  MethodDeclaration:
+    MethodHeader MethodBody
+
+  MethodHeader:
+    MethodModifiersopt TypeParametersopt Result MethodDeclarator Throwsopt
+
+  MethodDeclarator:
+    Identifier ( FormalParameterListopt )
+   */
+  def met =
+    modifiers ~ opt("<" ~> """[\w,]*""".r <~ ">") ~ objectType ~ methodDeclarator ~ opt("throws" ~> "[^{]*".r) ~ block ^^ {
+      case modifier ~ generic ~ result ~ md ~ thr ~ body => (md._1,body)
+    }
+
+  def methodDeclarator = (name <~ "(") ~ opt(repsep(opt(annotation) ~ (objectType ~ name),",")) <~ ")" ^^ {case n ~ args => (n, args.toString)}
+  def objectType: Parser[String] = """[\w]*""".r ~ opt("<" ~> opt(rep("""(\?|extends|super)""".r)) ~> objectType <~ ">") ^^ {x => x.toString()}
+
+  def method: Parser[JMethod] = opt(javadoc) ~ opt(annotation) ~ met ^^ {case j ~ a ~ n => JMethod(j, a, n._1,n._2.body)}
 
   def clas: Parser[JClass] = "class " ~ className ~ ("{" ~ classBody <~ "}")^^ {
     case c ~ n ~ b => JClass(n, List())
@@ -80,7 +98,8 @@ class JavaP extends RegexParsers{
 }
 
 case class JDoc(body:String)
-case class JMethod(doc:JDoc, name:String, body:String)
+case class JMethod(doc:Option[JDoc], anno: Option[JAnno],name:String, body:String)
+case class JMethodArg(name: List[String])
 case class JClass(name:String, ls:List[JMethod])
 case class JAnno(name:String)
 case class JInstanceVariable(modifiers: List[String], line:String)
