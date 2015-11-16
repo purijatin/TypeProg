@@ -41,7 +41,7 @@ class Prac2Test extends FlatSpec with Matchers with
     assert(Temp2("""public static int i = 23;""").successful)
     assert(Temp2("""public static final float i = 23.0;""").successful)
     assert(!Temp2("""public static String a = "23""").successful)
-    assert(Temp2("""List<String> ls = new ArrayList<>;""").successful)
+    assert(Temp2("""List<String> ls = new ArrayList<>();""").successful)
 
   }
 
@@ -103,17 +103,29 @@ class Prac2Test extends FlatSpec with Matchers with
         |        shuffle(list, rnd);
         |    }
       """.stripMargin).successful)
-    println(Temp(
+    assert(Temp(
       """
         |public static <T> int binarySearch(List<? extends T> list, T key, Comparator<? super T> c) {
         |        if (c==null){
-        |            return binarySearch((List<? extends Comparable<? super T>>) list, key);}
         |
+        |                 return binarySearch((List<? extends Comparable<? super T>>) list, key);
+        |            }
         |        else{
         |            return Collections.iteratorBinarySearch(list, key, c);
         |            }
         |    }
+      """.stripMargin).successful)
+    println(Temp(
+      """
+        |
+        |@Override
+        |publix void go(){
+        | sout("asdf");
+        |}
+        |
+        |
       """.stripMargin))
+
   }
 
 }

@@ -27,18 +27,17 @@ class JavaP extends RegexParsers{
     case modifiers ~ line => JInstanceVariable(modifiers.fold(List[String]())(x => List(x)), line)
   }
 
-  def
-  block: Parser[JBlock] = "{" ~> ("[^{^}]*".r ~ opt(block)) <~ "}" ^^ {x => JBlock(x.toString)}
+  def block: Parser[JBlock] = "{" ~> rep(opt("[^{^}]*".r) ~ opt(block)) <~ "}" ^^ {x => JBlock(x.toString)}
 
-  val blockC = new Parser[String] {
-    override def apply(in: Input): ParseResult[String] = {
+
+
+
+  val blockC = new Parser[JBlock] {
+    override def apply(in: Input): ParseResult[JBlock] = {
       var read = in
       val ans = new StringBuilder
       var count = 0
-      while(count > 0){
-        if(in.atEnd)
-          return Failure("Stream ended but block not.", read)
-
+      while(!read.atEnd){
         val x = read.first
         if(x == '{'){
           count = count+1
@@ -48,7 +47,9 @@ class JavaP extends RegexParsers{
         ans.+(x)
         read = read.drop(1)
       }
-      Success(ans.toString, read)
+      if(count==0)
+        Success(JBlock(ans.toString), read)
+      else Failure("Error. Block not completed well", read)
     }
   }
 

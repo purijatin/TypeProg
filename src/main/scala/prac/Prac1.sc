@@ -33,3 +33,4 @@ int2 plus int1
 
 
 
+case class T(n:String)
