@@ -62,7 +62,6 @@ object Main {
       val scalacast = b.add(Broadcast[Tweet](2))
       scala ~> scalacast.in
 
-
       scalacast.out(0).via(fold) ~> Sink.foreach((x:Int) => println("Scala Count: "+x))
       scalacast.out(1) ~> writeScala
 
@@ -77,6 +76,7 @@ object Main {
     Thread.sleep(30000)
     println("-------exiting--------")
     publisher.exit
+    fact.shutdown()
   }
 
 
